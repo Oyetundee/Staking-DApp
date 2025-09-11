@@ -10,6 +10,28 @@ export default function WithdrawalRewards() {
   const [success, setSuccess] = useState('');
   const [localPendingRewards, setLocalPendingRewards] = useState(null); // Local state to override pending rewards
   const [isClaimProcessing, setIsClaimProcessing] = useState(false); // Track if we're in claim process
+  const [currentTime, setCurrentTime] = useState(Math.floor(Date.now() / 1000)); // Real-time counter
+  
+  // Auto-clear loading states after timeout to prevent stuck buttons
+  React.useEffect(() => {
+    if (isLoading) {
+      const timeout = setTimeout(() => {
+        console.log('Clearing stuck loading state');
+        setIsLoading(false);
+      }, 30000); // Clear after 30 seconds
+      
+      return () => clearTimeout(timeout);
+    }
+  }, [isLoading]);
+
+  // Real-time countdown timer
+  React.useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(Math.floor(Date.now() / 1000));
+    }, 1000);
+    
+    return () => clearInterval(timer);
+  }, []);
 
   const { address } = useAccount();
 
@@ -145,12 +167,14 @@ export default function WithdrawalRewards() {
       return;
     }
 
-    // Check if tokens are still locked using actual contract data
+    // Check if tokens are still locked using our 1-day lock period
     const currentTime = Math.floor(Date.now() / 1000);
-    const unlockTime = Number(userDetails.unlockTime);
+    const stakingTimestamp = Number(userDetails.stakingTimestamp);
+    const unlockTime = stakingTimestamp + LOCK_DURATION;
     
     console.log('Withdrawal Check:', {
       currentTime,
+      stakingTimestamp,
       unlockTime,
       isLocked: unlockTime > currentTime,
       stakedAmount: userDetails.stakedAmount.toString(),
@@ -161,7 +185,7 @@ export default function WithdrawalRewards() {
       const timeLeft = unlockTime - currentTime;
       const hours = Math.floor(timeLeft / 3600);
       const minutes = Math.floor((timeLeft % 3600) / 60);
-      setError(`Tokens are still locked. Unlock in ${hours}h ${minutes}m. Use emergency withdrawal to bypass lock (50% penalty).`);
+      setError(`Tokens are locked for 1 day. Unlock in ${hours}h ${minutes}m. Use emergency withdrawal to bypass lock (50% penalty).`);
       return;
     }
 
@@ -230,11 +254,12 @@ export default function WithdrawalRewards() {
     
     const confirmMessage = `EMERGENCY WITHDRAWAL WARNING\n\n` +
       `Staked Amount: ${stakedAmountFormatted} tokens\n` +
-      `Penalty (50%): ${penaltyAmount} tokens\n` +
+      `Penalty (50%): ${penaltyAmount} tokens\n\n` +
       `You will receive: ${receivedAmount} tokens\n\n` +
       `This action cannot be undone. Continue?`;
     
     if (!confirm(confirmMessage)) {
+      // User cancelled - don't set any loading states
       return;
     }
 
@@ -264,26 +289,41 @@ export default function WithdrawalRewards() {
     }
   };
 
-  const isWithdrawLoading = isWithdrawSuccess || (withdrawHash && !isWithdrawSuccess && !isWithdrawError);
-  const isClaimLoading = isClaimSuccess || (claimHash && !isClaimSuccess && !isClaimError);
-  const isEmergencyLoading = isEmergencySuccess || (emergencyHash && !isEmergencySuccess && !isEmergencyError);
-  
-  const isButtonLoading = isLoading || isWithdrawPending || isClaimPending || isEmergencyPending || isWithdrawLoading || isClaimLoading || isEmergencyLoading;
-  
-  // Extract data from userDetails struct
+  // Extract data from userDetails struct first
   const stakedAmount = userDetails?.stakedAmount || 0n;
-  const currentTime = Math.floor(Date.now() / 1000);
-  const isUnlocked = userDetails ? userDetails.unlockTime <= currentTime : false;
+  // currentTime is now managed by state for real-time updates
+  
+  // Enforce 1-day lock period (24 hours = 86400 seconds)
+  const LOCK_DURATION = 24 * 60 * 60; // 1 day in seconds
+  const stakingTimestamp = userDetails ? Number(userDetails.stakingTimestamp) : 0;
+  const unlockTime = stakingTimestamp + LOCK_DURATION;
+  const isUnlocked = currentTime >= unlockTime && stakingTimestamp > 0;
+
+  // Loading states (do not treat success as loading)
+  const isWithdrawLoading = isWithdrawPending || (withdrawHash && !isWithdrawSuccess && !isWithdrawError);
+  const isClaimLoading = isClaimPending || (claimHash && !isClaimSuccess && !isClaimError);
+  const isEmergencyLoading = isEmergencyPending || (emergencyHash && !isEmergencySuccess && !isEmergencyError);
+  
+  // Per-button disabled flags
+  const withdrawDisabled = isLoading || isWithdrawLoading || !address || !isUnlocked || stakedAmount === 0n;
+  const claimDisabled = !address || !pendingRewards || pendingRewards === 0n || isClaimProcessing || isClaimLoading;
+  const emergencyDisabled = isLoading || isEmergencyLoading || !address || stakedAmount === 0n;
   
   const getUnlockTimeDisplay = () => {
-    if (!userDetails || isUnlocked) return 'Available now';
-    const timeLeft = Number(userDetails.unlockTime) - currentTime;
+    if (!userDetails || !stakingTimestamp) return 'No stake found';
+    if (isUnlocked) return 'Available now';
+    
+    const timeLeft = unlockTime - currentTime;
+    if (timeLeft <= 0) return 'Available now';
+    
     const hours = Math.floor(timeLeft / 3600);
     const minutes = Math.floor((timeLeft % 3600) / 60);
-    return `${hours}h ${minutes}m remaining`;
+    const seconds = timeLeft % 60;
+    
+    return `${hours}h ${minutes}m ${seconds}s remaining`;
   };
   
-  const unlockTime = getUnlockTimeDisplay();
+  const unlockTimeDisplay = getUnlockTimeDisplay();
 
   return (
     <div className="space-y-6">
@@ -345,13 +385,13 @@ export default function WithdrawalRewards() {
           <div className="text-center p-4 bg-yellow-50 rounded-lg">
             <p className="text-sm text-gray-600">Unlock Status</p>
             <p className={`text-lg font-semibold ${isUnlocked ? 'text-green-600' : 'text-yellow-600'}`}>
-              {isUnlocked ? 'Unlocked' : `Locked - ${unlockTime}`}
+              {isUnlocked ? 'Unlocked' : `Locked - ${unlockTimeDisplay}`}
             </p>
-            {!isUnlocked && (
-              <p className="text-xs text-yellow-700 mt-1">
-                Use Emergency Withdrawal for immediate access (50% penalty)
-              </p>
-            )}
+            <p className="text-xs text-yellow-700 mt-1">
+              {isUnlocked ? 
+                "Tokens are now available for withdrawal" :
+                "1-day lock period active. Use Emergency Withdrawal for immediate access (50% penalty)"}
+            </p>
           </div>
         </div>
       </div>
@@ -394,7 +434,7 @@ export default function WithdrawalRewards() {
                   step="0.000000000000000001"
                   min="0"
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-colors"
-                  disabled={isButtonLoading || !isUnlocked}
+                  disabled={withdrawDisabled}
                 />
                 <div className="absolute inset-y-0 right-0 flex items-center pr-3">
                   <span className="text-gray-500 text-sm">TOKENS</span>
@@ -404,7 +444,7 @@ export default function WithdrawalRewards() {
 
             <button
               type="submit"
-              disabled={isButtonLoading || !address || !isUnlocked || stakedAmount === 0n}
+              disabled={withdrawDisabled}
               className="w-full bg-gradient-to-r from-red-500 to-red-600 text-white py-3 px-4 rounded-lg font-semibold hover:from-red-600 hover:to-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isWithdrawLoading ? (
@@ -417,9 +457,11 @@ export default function WithdrawalRewards() {
               )}
             </button>
 
-            {!isUnlocked && stakedAmount > 0n && (
+            {stakedAmount > 0n && (
               <p className="text-yellow-600 text-sm text-center">
-                Tokens are locked until: {unlockTime}
+                {isUnlocked ? 
+                  "Tokens are available for withdrawal now" : 
+                  `1-day lock period: ${unlockTimeDisplay}`}
               </p>
             )}
           </form>
@@ -455,7 +497,7 @@ export default function WithdrawalRewards() {
 
             <button
               onClick={handleClaimRewards}
-              disabled={!address || !pendingRewards || pendingRewards === 0n || isClaimProcessing}
+              disabled={claimDisabled}
               className="w-full bg-gradient-to-r from-green-500 to-green-600 text-white py-3 px-4 rounded-lg font-semibold hover:from-green-600 hover:to-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isClaimProcessing ? (
@@ -492,7 +534,7 @@ export default function WithdrawalRewards() {
 
             <button
               onClick={handleEmergencyWithdraw}
-              disabled={isButtonLoading || !address || stakedAmount === 0n}
+              disabled={emergencyDisabled}
               className="w-full bg-gradient-to-r from-red-500 to-red-600 text-white py-3 px-4 rounded-lg font-semibold hover:from-red-600 hover:to-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isEmergencyLoading ? (
