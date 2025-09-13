@@ -19,7 +19,9 @@ dataSources:
         - Staked                       
         - Withdrawn                    
         - EmergencyWithdrawn           
-        - RewardsClaimed               
+        - RewardsClaimed
+        - UserStats
+        - ProtocolStats
       abis:                            
         - name: StakingContract        
           file: ./abis/StakingContract.json  

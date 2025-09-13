@@ -3,169 +3,82 @@
 
 # Stores data when a user does an emergency withdrawal
 type EmergencyWithdrawn @entity(immutable: true) {
-  id: Bytes!
-  user: Bytes! 
-  amount: BigInt! 
-  penalty: BigInt! 
-  timestamp: BigInt! 
-  newTotalStaked: BigInt! 
-  blockNumber: BigInt!
-  blockTimestamp: BigInt!
-  transactionHash: Bytes!
-}
-
-# Stores data when contract ownership changes
-type OwnershipTransferred @entity(immutable: true) {
-  id: Bytes!
-  previousOwner: Bytes! 
-  newOwner: Bytes! 
-  blockNumber: BigInt!
-  blockTimestamp: BigInt!
-  transactionHash: Bytes!
-}
-
-# Stores data when the contract gets paused
-type Paused @entity(immutable: true) {
-  id: Bytes!                    
-  account: Bytes! 
-  blockNumber: BigInt!          
-  blockTimestamp: BigInt!      
-  transactionHash: Bytes!       
-}
-
-# Stores data when reward rate changes
-type RewardRateUpdated @entity(immutable: true) {
-  id: Bytes!                    
-  oldRate: BigInt! 
-  newRate: BigInt! 
-  timestamp: BigInt! 
-  totalStaked: BigInt! 
-  blockNumber: BigInt!          
-  blockTimestamp: BigInt!       
-  transactionHash: Bytes!       
+  id: Bytes!                    # unique identifier
+  user: Bytes!                  # wallet address
+  amount: BigInt!               # tokens withdrawn
+  penalty: BigInt!              # penalty fee paid
+  timestamp: BigInt!            # contract timestamp
+  newTotalStaked: BigInt!       # protocol total after withdrawal
+  blockNumber: BigInt!          # ethereum block number
+  blockTimestamp: BigInt!       # block timestamp
+  transactionHash: Bytes!       # transaction hash
 }
 
 # Stores data when a user claims their rewards
 type RewardsClaimed @entity(immutable: true) {
-  id: Bytes!                         
-  user: Bytes! 
-  amount: BigInt! 
-  timestamp: BigInt! 
-  newPendingRewards: BigInt! 
-  totalStaked: BigInt! 
-  blockNumber: BigInt!              
-  blockTimestamp: BigInt!            
-  transactionHash: Bytes!           
+  id: Bytes!                    # unique identifier
+  user: Bytes!                  # wallet address
+  amount: BigInt!               # reward tokens claimed
+  timestamp: BigInt!            # contract timestamp
+  newPendingRewards: BigInt!    # remaining unclaimed rewards
+  totalStaked: BigInt!          # protocol total at claim time
+  blockNumber: BigInt!          # ethereum block number
+  blockTimestamp: BigInt!       # block timestamp
+  transactionHash: Bytes!       # transaction hash
 }
 
 # Stores data when a user stakes tokens
 type Staked @entity(immutable: true) {
-  id: Bytes!                        
-  user: Bytes! 
-  amount: BigInt! 
-  timestamp: BigInt! 
-  newTotalStaked: BigInt! 
-  currentRewardRate: BigInt! 
-  blockNumber: BigInt!             
-  blockTimestamp: BigInt!           
-  transactionHash: Bytes!           
-}
-
-# Stores data when staking contract is initialized
-type StakingInitialized @entity(immutable: true) {
-  id: Bytes!
-  stakingToken: Bytes! # address
-  initialRewardRate: BigInt! # uint256
-  timestamp: BigInt! # uint256
-  blockNumber: BigInt!
-  blockTimestamp: BigInt!
-  transactionHash: Bytes!
-}
-
-# Stores data when staking is paused
-type StakingPaused @entity(immutable: true) {
-  id: Bytes!
-  timestamp: BigInt! # uint256
-  blockNumber: BigInt!
-  blockTimestamp: BigInt!
-  transactionHash: Bytes!
-}
-
-# Stores data when staking is unpaused
-type StakingUnpaused @entity(immutable: true) {
-  id: Bytes!
-  timestamp: BigInt! # uint256
-  blockNumber: BigInt!
-  blockTimestamp: BigInt!
-  transactionHash: Bytes!
-}
-
-# Stores data when tokens are recovered from contract
-type TokenRecovered @entity(immutable: true) {
-  id: Bytes!
-  token: Bytes! # address
-  amount: BigInt! # uint256
-  timestamp: BigInt! # uint256
-  blockNumber: BigInt!
-  blockTimestamp: BigInt!
-  transactionHash: Bytes!
-}
-
-# Stores data when the contract gets unpaused
-type Unpaused @entity(immutable: true) {
-  id: Bytes!
-  account: Bytes! # address
-  blockNumber: BigInt!
-  blockTimestamp: BigInt!
-  transactionHash: Bytes!
+  id: Bytes!                    # unique identifier
+  user: Bytes!                  # wallet address
+  amount: BigInt!               # tokens staked
+  timestamp: BigInt!            # contract timestamp
+  newTotalStaked: BigInt!       # protocol total after stake
+  currentRewardRate: BigInt!    # reward rate at stake time
+  blockNumber: BigInt!          # ethereum block number
+  blockTimestamp: BigInt!       # block timestamp
+  transactionHash: Bytes!       # transaction hash
 }
 
 # Stores data when a user withdraws tokens
 type Withdrawn @entity(immutable: true) {
-  id: Bytes!
-  user: Bytes! # address
-  amount: BigInt! 
-  timestamp: BigInt! 
-  newTotalStaked: BigInt! 
-  currentRewardRate: BigInt! 
-  rewardsAccrued: BigInt! 
-  blockNumber: BigInt!
-  blockTimestamp: BigInt!
-  transactionHash: Bytes!
+  id: Bytes!                    # unique identifier
+  user: Bytes!                  # wallet address
+  amount: BigInt!               # tokens withdrawn
+  timestamp: BigInt!            # contract timestamp
+  newTotalStaked: BigInt!       # protocol total after withdrawal
+  currentRewardRate: BigInt!    # reward rate at withdrawal time
+  rewardsAccrued: BigInt!       # rewards earned during staking period
+  blockNumber: BigInt!          # ethereum block number
+  blockTimestamp: BigInt!       # block timestamp
+  transactionHash: Bytes!       # transaction hash
 }
-
 
 # Stores lifetime statistics for each user 
 type UserStats @entity(immutable: false) {
-  id: ID!
-  user: Bytes! 
-  totalStaked: BigInt!                     
-  totalWithdrawn: BigInt!                  
-  totalRewardsClaimed: BigInt!             
-  totalEmergencyWithdrawn: BigInt!          
-  totalPenaltiesPaid: BigInt!              
-  currentStakedAmount: BigInt!              
-  stakingCount: BigInt!                     
-  withdrawalCount: BigInt!                  
-  emergencyWithdrawalCount: BigInt!         
-  rewardClaimCount: BigInt!                 
-  firstStakeTimestamp: BigInt!              
-  lastActivityTimestamp: BigInt!            
+  id: ID!                           # wallet address (for database) #like a record name or number
+  user: Bytes!                      # wallet address (for data)
+  totalStaked: BigInt!              # all tokens ever staked
+  totalWithdrawn: BigInt!           # all tokens ever withdrawn
+  totalRewardsClaimed: BigInt!      # all reward tokens claimed
+  totalEmergencyWithdrawn: BigInt!  # all emergency withdrawals
+  totalPenaltiesPaid: BigInt!       # all penalties paid
+  currentStakedAmount: BigInt!      # tokens currently staked
+  firstStakeTimestamp: BigInt!      # when user first staked
+  lastActivityTimestamp: BigInt!    # last stake/withdraw/claim time
 }
 
 # Stores overall protocol statistics 
 type ProtocolStats @entity(immutable: false) {
-  id: ID! # "protocol"                     
-  totalStaked: BigInt!                      
-  totalWithdrawn: BigInt!                   
-  totalRewardsPaid: BigInt!                 
-  totalEmergencyWithdrawn: BigInt!          
-  totalPenaltiesCollected: BigInt!          
-  currentTotalStaked: BigInt!               
-  uniqueStakers: BigInt!                    
-  totalTransactions: BigInt!                
-  currentRewardRate: BigInt!                
-  lastUpdatedTimestamp: BigInt!             
-  lastUpdatedBlock: BigInt!                 
+  id: ID!                           # always "protocol"  #like a record name or number
+  totalStaked: BigInt!              # all tokens ever staked by everyone
+  totalWithdrawn: BigInt!           # all tokens ever withdrawn
+  totalRewardsPaid: BigInt!         # all rewards ever paid out
+  totalEmergencyWithdrawn: BigInt!  # all emergency withdrawals
+  totalPenaltiesCollected: BigInt!  # all penalties collected
+  currentTotalStaked: BigInt!       # tokens currently locked in protocol
+  uniqueStakers: BigInt!            # number of unique wallet addresses
+  currentRewardRate: BigInt!        # current reward rate
+  lastUpdatedTimestamp: BigInt!     # last time stats were updated
 }
 
