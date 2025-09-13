@@ -1,67 +1,77 @@
+# @entity(immutable: true) means the record never changes after creation
+# @entity(immutable: false) means the record can be updated
+
+# Stores data when a user does an emergency withdrawal
 type EmergencyWithdrawn @entity(immutable: true) {
   id: Bytes!
-  user: Bytes! # address
-  amount: BigInt! # uint256
-  penalty: BigInt! # uint256
-  timestamp: BigInt! # uint256
-  newTotalStaked: BigInt! # uint256
+  user: Bytes! 
+  amount: BigInt! 
+  penalty: BigInt! 
+  timestamp: BigInt! 
+  newTotalStaked: BigInt! 
   blockNumber: BigInt!
   blockTimestamp: BigInt!
   transactionHash: Bytes!
 }
 
+# Stores data when contract ownership changes
 type OwnershipTransferred @entity(immutable: true) {
   id: Bytes!
-  previousOwner: Bytes! # address
-  newOwner: Bytes! # address
+  previousOwner: Bytes! 
+  newOwner: Bytes! 
   blockNumber: BigInt!
   blockTimestamp: BigInt!
   transactionHash: Bytes!
 }
 
+# Stores data when the contract gets paused
 type Paused @entity(immutable: true) {
-  id: Bytes!
-  account: Bytes! # address
-  blockNumber: BigInt!
-  blockTimestamp: BigInt!
-  transactionHash: Bytes!
+  id: Bytes!                    
+  account: Bytes! 
+  blockNumber: BigInt!          
+  blockTimestamp: BigInt!      
+  transactionHash: Bytes!       
 }
 
+# Stores data when reward rate changes
 type RewardRateUpdated @entity(immutable: true) {
-  id: Bytes!
-  oldRate: BigInt! # uint256
-  newRate: BigInt! # uint256
-  timestamp: BigInt! # uint256
-  totalStaked: BigInt! # uint256
-  blockNumber: BigInt!
-  blockTimestamp: BigInt!
-  transactionHash: Bytes!
+  id: Bytes!                    
+  oldRate: BigInt! 
+  newRate: BigInt! 
+  timestamp: BigInt! 
+  totalStaked: BigInt! 
+  blockNumber: BigInt!          
+  blockTimestamp: BigInt!       
+  transactionHash: Bytes!       
 }
 
+# Stores data when a user claims their rewards
 type RewardsClaimed @entity(immutable: true) {
-  id: Bytes!
-  user: Bytes! # address
-  amount: BigInt! # uint256
-  timestamp: BigInt! # uint256
-  newPendingRewards: BigInt! # uint256
-  totalStaked: BigInt! # uint256
-  blockNumber: BigInt!
-  blockTimestamp: BigInt!
-  transactionHash: Bytes!
+  id: Bytes!                         
+  user: Bytes! 
+  amount: BigInt! 
+  timestamp: BigInt! 
+  newPendingRewards: BigInt! 
+  totalStaked: BigInt! 
+  blockNumber: BigInt!              
+  blockTimestamp: BigInt!            
+  transactionHash: Bytes!           
 }
 
+# Stores data when a user stakes tokens
 type Staked @entity(immutable: true) {
-  id: Bytes!
-  user: Bytes! # address
-  amount: BigInt! # uint256
-  timestamp: BigInt! # uint256
-  newTotalStaked: BigInt! # uint256
-  currentRewardRate: BigInt! # uint256
-  blockNumber: BigInt!
-  blockTimestamp: BigInt!
-  transactionHash: Bytes!
+  id: Bytes!                        
+  user: Bytes! 
+  amount: BigInt! 
+  timestamp: BigInt! 
+  newTotalStaked: BigInt! 
+  currentRewardRate: BigInt! 
+  blockNumber: BigInt!             
+  blockTimestamp: BigInt!           
+  transactionHash: Bytes!           
 }
 
+# Stores data when staking contract is initialized
 type StakingInitialized @entity(immutable: true) {
   id: Bytes!
   stakingToken: Bytes! # address
@@ -72,6 +82,7 @@ type StakingInitialized @entity(immutable: true) {
   transactionHash: Bytes!
 }
 
+# Stores data when staking is paused
 type StakingPaused @entity(immutable: true) {
   id: Bytes!
   timestamp: BigInt! # uint256
@@ -80,6 +91,7 @@ type StakingPaused @entity(immutable: true) {
   transactionHash: Bytes!
 }
 
+# Stores data when staking is unpaused
 type StakingUnpaused @entity(immutable: true) {
   id: Bytes!
   timestamp: BigInt! # uint256
@@ -88,6 +100,7 @@ type StakingUnpaused @entity(immutable: true) {
   transactionHash: Bytes!
 }
 
+# Stores data when tokens are recovered from contract
 type TokenRecovered @entity(immutable: true) {
   id: Bytes!
   token: Bytes! # address
@@ -98,6 +111,7 @@ type TokenRecovered @entity(immutable: true) {
   transactionHash: Bytes!
 }
 
+# Stores data when the contract gets unpaused
 type Unpaused @entity(immutable: true) {
   id: Bytes!
   account: Bytes! # address
@@ -106,15 +120,52 @@ type Unpaused @entity(immutable: true) {
   transactionHash: Bytes!
 }
 
+# Stores data when a user withdraws tokens
 type Withdrawn @entity(immutable: true) {
   id: Bytes!
   user: Bytes! # address
-  amount: BigInt! # uint256
-  timestamp: BigInt! # uint256
-  newTotalStaked: BigInt! # uint256
-  currentRewardRate: BigInt! # uint256
-  rewardsAccrued: BigInt! # uint256
+  amount: BigInt! 
+  timestamp: BigInt! 
+  newTotalStaked: BigInt! 
+  currentRewardRate: BigInt! 
+  rewardsAccrued: BigInt! 
   blockNumber: BigInt!
   blockTimestamp: BigInt!
   transactionHash: Bytes!
 }
+
+
+# Stores lifetime statistics for each user 
+type UserStats @entity(immutable: false) {
+  id: ID!
+  user: Bytes! 
+  totalStaked: BigInt!                     
+  totalWithdrawn: BigInt!                  
+  totalRewardsClaimed: BigInt!             
+  totalEmergencyWithdrawn: BigInt!          
+  totalPenaltiesPaid: BigInt!              
+  currentStakedAmount: BigInt!              
+  stakingCount: BigInt!                     
+  withdrawalCount: BigInt!                  
+  emergencyWithdrawalCount: BigInt!         
+  rewardClaimCount: BigInt!                 
+  firstStakeTimestamp: BigInt!              
+  lastActivityTimestamp: BigInt!            
+}
+
+# Stores overall protocol statistics 
+type ProtocolStats @entity(immutable: false) {
+  id: ID! # "protocol"                     
+  totalStaked: BigInt!                      
+  totalWithdrawn: BigInt!                   
+  totalRewardsPaid: BigInt!                 
+  totalEmergencyWithdrawn: BigInt!          
+  totalPenaltiesCollected: BigInt!          
+  currentTotalStaked: BigInt!               
+  uniqueStakers: BigInt!                    
+  totalTransactions: BigInt!                
+  currentRewardRate: BigInt!                
+  lastUpdatedTimestamp: BigInt!             
+  lastUpdatedBlock: BigInt!                 
+}
+
