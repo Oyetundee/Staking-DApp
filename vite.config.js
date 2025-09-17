@@ -6,11 +6,8 @@ export default defineConfig({
   plugins: [react()],
   build: {
     rollupOptions: {
-      external: [],
+      external: ['rxjs'],
     }
-  },
-  optimizeDeps: {
-    include: ['@apollo/client', 'rxjs', 'rxjs/operators']
   },
   define: {
     global: 'globalThis',
